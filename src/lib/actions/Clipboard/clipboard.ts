@@ -7,7 +7,7 @@ export function clipboard(node: HTMLElement, args: any) {
 			// Element Inner HTML
 			if (Object.prototype.hasOwnProperty.call(args, 'element')) {
 				const element: HTMLElement | null = document.querySelector(`[data-clipboard="${args.element}"]`);
-				copyToClipboard(element?.innerHTML);
+				copyToClipboard(element?.innerHTML, 'text/html');
 				return;
 			}
 			// Form Input Value
@@ -34,6 +34,20 @@ export function clipboard(node: HTMLElement, args: any) {
 }
 
 // Shared copy method
-function copyToClipboard(data: any): void {
-	navigator.clipboard.writeText(String(data));
+async function copyToClipboard(data: any, mimeType = 'text/plain') {
+	if (navigator.clipboard.write) {
+		console.log('writing to clipboard', data, mimeType);
+		await navigator.clipboard.write([
+			new ClipboardItem({
+				[mimeType]: new Blob([data], {
+					type: mimeType
+				})
+			})
+		]);
+	} else {
+		// fallback since .writeText has wider browser support
+		await new Promise((resolve, reject) => {
+			resolve(navigator.clipboard.writeText(String(data)));
+		});
+	}
 }
